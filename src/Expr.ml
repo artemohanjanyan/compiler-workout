@@ -3,7 +3,7 @@
 (* Opening a library for generic programming (https://github.com/dboulytchev/GT).
    The library provides "@type ..." syntax extension and plugins like show, etc.
 *)
-open GT 
+open GT
              
 (* The type for the expression. Note, in regular OCaml there is no "@type..." 
    notation, it came from GT. 
@@ -35,13 +35,13 @@ let update x v s = fun y -> if x = y then v else s y
 (* An example of a non-trivial state: *)                                                   
 let s = update "x" 1 @@ update "y" 2 @@ update "z" 3 @@ update "t" 4 empty
 
-(* Some testing; comment this definition out when submitting the solution. *)
+(* Some testing; comment this definition out when submitting the solution.
 let _ =
   List.iter
     (fun x ->
        try  Printf.printf "%s=%d\n" x @@ s x
        with Failure s -> Printf.printf "%s\n" s
-    ) ["x"; "a"; "y"; "z"; "t"; "b"]
+    ) ["x"; "a"; "y"; "z"; "t"; "b"] *)
 
 (* Expression evaluator
 
@@ -50,5 +50,28 @@ let _ =
    Takes a state and an expression, and returns the value of the expression in 
    the given state.
 *)
-let eval = failwith "Not implemented yet"
-                    
+let rec eval s e =
+  let fromInt = function
+    | 0 -> false
+    | _ -> true
+  and toInt = function
+    | false -> 0
+    | true -> 1 in
+  match e with
+    | Const (x) -> x
+    | Var (varName) -> s varName
+    | Binop (op, l, r) -> match op with
+      | "!!" -> toInt (fromInt (eval s l) || fromInt (eval s r))
+      | "&&" -> toInt (fromInt (eval s l) && fromInt (eval s r))
+      | "==" -> toInt (eval s l == eval s r)
+      | "!=" -> toInt (eval s l != eval s r)
+      | "<=" -> toInt (eval s l <= eval s r)
+      | "<"  -> toInt (eval s l <  eval s r)
+      | ">=" -> toInt (eval s l >= eval s r)
+      | ">"  -> toInt (eval s l >  eval s r)
+      | "+"  -> eval s l  +  eval s r
+      | "-"  -> eval s l  -  eval s r
+      | "*"  -> eval s l  *  eval s r
+      | "/"  -> eval s l  /  eval s r
+      | "%"  -> eval s l mod eval s r
+      | _    -> failwith "unknown binary operator"
